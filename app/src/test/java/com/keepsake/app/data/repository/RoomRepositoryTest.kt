@@ -6,6 +6,7 @@ import com.keepsake.app.data.local.dao.RoomDao
 import com.keepsake.app.data.local.entity.RoomEntity
 import io.mockk.*
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
@@ -75,13 +76,12 @@ class RoomRepositoryTest {
         coEvery { areaDao.countByRoom(any()) } returns 0
 
         val roomsFlow = repo.observeAll()
-        val first = roomsFlow.first()
+        val roomList = roomsFlow.first()
 
-        assertEquals(3, first.size)
-        // DAO returns sorted by updatedAt DESC
-        assertEquals("厨房", first[0].name)
-        assertEquals("卧室", first[1].name)
-        assertEquals("客厅", first[2].name)
+        assertEquals(3, roomList.size)
+        assertEquals("厨房", roomList[0].name)
+        assertEquals("卧室", roomList[1].name)
+        assertEquals("客厅", roomList[2].name)
     }
 
     @Test
