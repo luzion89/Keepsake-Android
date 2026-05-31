@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import com.keepsake.app.domain.model.Room
 import com.keepsake.app.ui.components.ConfirmDialog
 import com.keepsake.app.ui.components.EmptyState
@@ -157,6 +158,7 @@ private fun RoomCard(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AddRoomDialog(
     onDismiss: () -> Unit,

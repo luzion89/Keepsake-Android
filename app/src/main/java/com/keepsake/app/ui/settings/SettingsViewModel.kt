@@ -45,34 +45,31 @@ class SettingsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            dataStore.language.collect { _uiState.update { it.copy(language = it) } }
+            dataStore.language.collect { lang -> _uiState.update { s -> s.copy(language = lang) } }
         }
         viewModelScope.launch {
-            dataStore.themeMode.collect { _uiState.update { it.copy(theme = it) } }
+            dataStore.themeMode.collect { mode -> _uiState.update { s -> s.copy(theme = mode) } }
         }
         viewModelScope.launch {
             dataStore.aiEnabled.combine(dataStore.aiProvider) { e, p -> e to p }
-                .combine(dataStore.aiApiKey) { (e, p), k ->
-                    _uiState.update { it.copy(aiConfig = AiConfig(enabled = e, provider = p, apiKey = k)) }
+                .combine(dataStore.aiApiKey) { pair, k ->
+                    _uiState.update { s -> s.copy(aiConfig = AiConfig(enabled = pair.first, provider = pair.second, apiKey = k)) }
                 }
                 .collect()
         }
         viewModelScope.launch {
-            dataStore.deviceId.collect { _uiState.update { it.copy(deviceId = it) } }
+            dataStore.deviceId.collect { id -> _uiState.update { s -> s.copy(deviceId = id) } }
         }
         loadStats()
     }
 
     private fun loadStats() {
         viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    roomCount = roomRepo.count(),
-                    areaCount = areaRepo.count(),
-                    itemCount = itemRepo.count(),
-                    photoCount = photoRepo.count()
-                )
-            }
+            val rooms = roomRepo.count()
+            val areas = areaRepo.count()
+            val items = itemRepo.count()
+            val photos = photoRepo.count()
+            _uiState.update { it.copy(roomCount = rooms, areaCount = areas, itemCount = items, photoCount = photos) }
         }
     }
 

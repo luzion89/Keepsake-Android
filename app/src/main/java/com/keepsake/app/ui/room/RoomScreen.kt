@@ -2,6 +2,7 @@ package com.keepsake.app.ui.room
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -17,7 +18,7 @@ import com.keepsake.app.ui.components.ConfirmDialog
 import com.keepsake.app.ui.components.EmptyState
 import com.keepsake.app.ui.components.SwipeToDismissCard
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun RoomScreen(
     viewModel: RoomViewModel,
