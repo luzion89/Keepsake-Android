@@ -12,7 +12,7 @@ import javax.inject.Inject
 data class HomeUiState(
     val rooms: List<Room> = emptyList(),
     val isLoading: Boolean = true,
-    val showAddDialog: Boolean = false,
+    val showBottomSheet: Boolean = false,
     val editingRoomId: String? = null,
     val editingName: String = ""
 )
@@ -33,15 +33,15 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun showAddDialog() = _uiState.update { it.copy(showAddDialog = true) }
+    fun showBottomSheet() = _uiState.update { it.copy(showBottomSheet = true) }
 
-    fun dismissAddDialog() = _uiState.update { it.copy(showAddDialog = false) }
+    fun dismissBottomSheet() = _uiState.update { it.copy(showBottomSheet = false) }
 
     fun createRoom(name: String, icon: String? = null) {
         if (name.isBlank()) return
         viewModelScope.launch {
             roomRepo.create(name, icon)
-            _uiState.update { it.copy(showAddDialog = false) }
+            _uiState.update { it.copy(showBottomSheet = false) }
         }
     }
 
