@@ -68,20 +68,20 @@ class RoomRepositoryTest {
     }
 
     @Test
-    fun `observeAll should emit rooms`() = runTest {
+    fun `observeAll should emit rooms through domain mapping`() = runTest {
         val room1 = RoomEntity(id = "1", name = "厨房", updatedAt = 3000)
         val room2 = RoomEntity(id = "2", name = "客厅", updatedAt = 1000)
-        val room3 = RoomEntity(id = "3", name = "卧室", updatedAt = 2000)
-        coEvery { roomDao.observeAll() } returns flowOf(listOf(room1, room2, room3))
-        coEvery { areaDao.countByRoom(any()) } returns 0
+        coEvery { roomDao.observeAll() } returns flowOf(listOf(room1, room2))
+        coEvery { areaDao.countByRoom("1") } returns 3
+        coEvery { areaDao.countByRoom("2") } returns 0
 
-        val roomsFlow = repo.observeAll()
-        val roomList = roomsFlow.first()
+        val roomList = repo.observeAll().first()
 
-        assertEquals(3, roomList.size)
+        assertEquals(2, roomList.size)
         assertEquals("厨房", roomList[0].name)
-        assertEquals("卧室", roomList[1].name)
-        assertEquals("客厅", roomList[2].name)
+        assertEquals(3, roomList[0].areaCount)
+        assertEquals("客厅", roomList[1].name)
+        assertEquals(0, roomList[1].areaCount)
     }
 
     @Test

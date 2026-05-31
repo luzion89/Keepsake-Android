@@ -156,7 +156,7 @@ class ItemRepository @Inject constructor(
             name = name,
             qty = qty,
             unit = unit,
-            tags = tags.joinToString(",") { "[$it]" },
+            tags = tags.joinToString(",") { "\"$it\"" },
             notes = notes,
             expiresAt = expiresAt,
             source = source,
