@@ -154,8 +154,9 @@ class AiService @Inject constructor(private val client: OkHttpClient) {
     }
 
     suspend fun pingProvider(provider: String, apiKey: String): AiResult<String> {
-        val (url, apiKeyUsed, _) = getProviderConfig(provider, apiKey)
-        val requestBody = """{"model":"gpt-3.5-turbo","messages":[{"role":"user","content":"ping"}],"max_tokens":1}"""
+        val (url, apiKeyUsed, model) = getProviderConfig(provider, apiKey)
+        val pingModel = if (provider == "deepseek") "deepseek-chat" else model
+        val requestBody = """{"model":"$pingModel","messages":[{"role":"user","content":"hi"}],"max_tokens":1}"""
         val request = Request.Builder()
             .url(url)
             .addHeader("Authorization", "Bearer $apiKeyUsed")
