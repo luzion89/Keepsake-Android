@@ -25,23 +25,37 @@ import kotlin.random.Random
 // Muji Editorial Design Tokens — Exact Web Parity
 // ═══════════════════════════════════════════════════════════════
 
-// --- Core palette ---
-private val Ink          = Color(0xFF2F3E2E)  // Primary text / icons
-private val Paper        = Color(0xFFF1EDE6)  // Background
-private val Rosewood     = Color(0xFF9F4E5A)  // Accent: buttons, FAB, focus rings
-private val CardLight    = Color(0xFFFAFAF8)  // Card surface
-private val InkDark      = Color(0xFFC5D1C0)  // Inverted ink for dark surfaces
-private val PaperDark    = Color(0xFF1A1D19)  // Dark background
-private val RosewoodDark = Color(0xFFE4A0A8)  // Lighter accent for dark
-private val CardDark     = Color(0xFF1E211D)  // Dark card surface
+// --- Core palette (public for screen references) ---
+val Ink          = Color(0xFF2F3E2E)  // Primary text / icons
+val Paper        = Color(0xFFF1EDE6)  // Background
+val Rosewood     = Color(0xFF9F4E5A)  // Accent: buttons, FAB, focus rings
+val CardBg       = Color(0xFFFAFAF8)  // Card surface
+val InkMuted     = Color(0x802F3E2E)  // ~50% opacity ink for muted text
+val InkFaint     = Color(0x332F3E2E)  // ~20% opacity ink for very faint
+val InkVeryFaint = Color(0x142F3E2E)  // ~8% opacity for backgrounds
+private val InkDark      = Color(0xFFC5D1C0)
+private val PaperDark    = Color(0xFF1A1D19)
+private val RosewoodDark = Color(0xFFE4A0A8)
+private val CardDark     = Color(0xFF1E211D)
 
 // --- Border tokens ---
-// Light
-private val BorderSubtleLight  = Color(0x142F3E2E)  // rgba(47,62,46,0.08)
-private val BorderDefaultLight = Color(0x2E2F3E2E)  // rgba(47,62,46,0.18)
-// Dark
-private val BorderSubtleDark   = Color(0x14C8D2C3)  // rgba(200,210,195,0.08)
-private val BorderDefaultDark  = Color(0x2EC8D2C3)  // rgba(200,210,195,0.18)
+val BorderSubtle = Color(0x142F3E2E)  // rgba(47,62,46,0.08)
+private val BorderDefaultLight = Color(0x2E2F3E2E)
+private val BorderSubtleDark   = Color(0x14C8D2C3)
+private val BorderDefaultDark  = Color(0x2EC8D2C3)
+
+// Typography
+val SerifFont = FontFamily.Serif
+val SansFont = FontFamily.Default
+
+@Composable
+fun outlinedFieldColors(focusedBorderColor: Color) = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = focusedBorderColor,
+    unfocusedBorderColor = BorderSubtle,
+    focusedLabelColor = focusedBorderColor,
+    unfocusedLabelColor = InkMuted,
+    cursorColor = focusedBorderColor
+)
 
 // ═══════════════════════════════════════════════════════════════
 // Light Color Scheme
@@ -77,12 +91,12 @@ private val LightColorScheme = lightColorScheme(
     onBackground        = Ink,
     surface             = Paper,
     onSurface           = Ink,
-    surfaceVariant      = CardLight,
+    surfaceVariant      = CardBg,
     onSurfaceVariant    = Color(0xFF434A3F),
 
     // Borders
     outline             = BorderDefaultLight,
-    outlineVariant      = BorderSubtleLight,
+    outlineVariant      = BorderSubtle,
 
     // Surface containers (elevation ramp, light)
     surfaceContainerLowest  = Color(0xFFFFFBF7),

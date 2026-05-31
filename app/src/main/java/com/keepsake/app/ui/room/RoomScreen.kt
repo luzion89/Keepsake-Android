@@ -1,10 +1,14 @@
 package com.keepsake.app.ui.room
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -12,11 +16,22 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.keepsake.app.domain.model.Area
 import com.keepsake.app.ui.components.ConfirmDialog
 import com.keepsake.app.ui.components.EmptyState
-import com.keepsake.app.ui.components.SwipeToDismissCard
+import com.keepsake.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -25,95 +40,109 @@ fun RoomScreen(
     onAreaClick: (String) -> Unit,
     onBack: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsState()
     var deleteTarget by remember { mutableStateOf<Area?>(null) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(uiState.room?.name ?: "") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.DoorFront, null, Modifier.size(20.dp), tint = Ink)
+                        Spacer(Modifier.width(8.dp))
+                        Text(state.room?.name ?: "", fontFamily = SerifFont, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Ink)
                     }
-                }
+                },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回", tint = Ink) } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Paper)
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { viewModel.showAddDialog() }) {
-                Icon(Icons.Default.Add, "添加区域")
+            var showSheet by remember { mutableStateOf(false) }
+            var name by remember { mutableStateOf("") }
+            val presets = listOf("洗手台柜子", "墙壁柜", "抽屉", "沙发底下", "床底下", "衣柜", "门边角落", "电视柜")
+
+            FloatingActionButton(
+                onClick = { showSheet = true },
+                containerColor = Rosewood,
+                contentColor = Paper,
+                shape = RoundedCornerShape(16.dp)
+            ) { Icon(Icons.Default.Add, "添加区域") }
+
+            if (showSheet) {
+                AlertDialog(
+                    onDismissRequest = { showSheet = false },
+                    containerColor = CardBg,
+                    shape = RoundedCornerShape(12.dp),
+                    title = { Text("添加区域", fontFamily = SerifFont, fontWeight = FontWeight.Bold, color = Ink) },
+                    text = {
+                        Column {
+                            OutlinedTextField(
+                                value = name, onValueChange = { if (it.length <= 80) name = it },
+                                label = { Text("区域名称", color = InkMuted) },
+                                singleLine = true, modifier = Modifier.fillMaxWidth(),
+                                colors = outlinedFieldColors(focusedBorderColor = Rosewood)
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text("预设名称", style = MaterialTheme.typography.labelMedium.copy(color = InkMuted, fontFamily = SansFont, fontSize = 12.sp))
+                            Spacer(Modifier.height(4.dp))
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                presets.forEach { p ->
+                                    FilterChip(selected = name == p, onClick = { name = p },
+                                        label = { Text(p, fontSize = 12.sp) },
+                                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Rosewood.copy(alpha = 0.15f), selectedLabelColor = Rosewood))
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { viewModel.createArea(name.trim()); name = ""; showSheet = false }, enabled = name.isNotBlank()) {
+                            Text("确定", color = if (name.isNotBlank()) Rosewood else InkMuted)
+                        }
+                    },
+                    dismissButton = { TextButton(onClick = { showSheet = false }) { Text("取消", color = InkMuted) } }
+                )
             }
         }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(Modifier.fillMaxSize().padding(padding)) {
             when {
-                uiState.isLoading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                uiState.room == null -> EmptyState(Icons.Default.Warning, "房间不存在")
-                uiState.areas.isEmpty() -> EmptyState(Icons.Default.Category, "还没有区域，点击右下角添加")
-                else -> LazyColumn(
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(uiState.areas, key = { it.id }) { area ->
-                        AreaCard(
-                            area = area,
-                            isEditing = uiState.editingAreaId == area.id,
-                            editingName = uiState.editingName,
-                            onNameChange = { viewModel.updateEditingName(it) },
-                            onNameClick = { viewModel.startEditing(area) },
-                            onCommitRename = { viewModel.commitRename() },
-                            onCancelEdit = { viewModel.cancelEditing() },
-                            onClick = { onAreaClick(area.id) },
-                            onDelete = { deleteTarget = area }
-                        )
+                state.isLoading -> CircularProgressIndicator(Modifier.align(Alignment.Center), color = Rosewood)
+                state.room == null -> EmptyState(Icons.Default.Warning, "房间不存在")
+                state.areas.isEmpty() -> EmptyState(Icons.Default.Category, "还没有区域")
+                else -> Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+                    Text("${state.areas.size} 个区域", fontSize = 12.sp, color = InkMuted, fontFamily = SansFont,
+                        modifier = Modifier.padding(top = 8.dp, bottom = 8.dp))
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = CardBg),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column {
+                            state.areas.forEachIndexed { idx, area ->
+                                AreaRow(area = area,
+                                    isEditing = state.editingAreaId == area.id,
+                                    editName = state.editingName,
+                                    onNameChange = { viewModel.updateEditingName(it) },
+                                    onStartEdit = { viewModel.startEditing(area) },
+                                    onCommitRename = { viewModel.commitRename() },
+                                    onCancelEdit = { viewModel.cancelEditing() },
+                                    onClick = { onAreaClick(area.id) },
+                                    onDelete = { deleteTarget = area }
+                                )
+                                if (idx < state.areas.lastIndex) Divider(color = BorderSubtle, thickness = 0.5.dp)
+                            }
+                        }
                     }
                 }
             }
         }
-    }
-
-    if (uiState.showAddDialog) {
-        var name by remember { mutableStateOf("") }
-        val presets = listOf("洗手台柜子", "墙壁柜", "电视柜", "抽屉", "沙发底下", "床底下", "衣柜", "门边角落")
-
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissAddDialog() },
-            title = { Text("添加区域") },
-            text = {
-                Column {
-                    OutlinedTextField(
-                        value = name,
-                        onValueChange = { if (it.length <= 80) name = it },
-                        label = { Text("区域名称") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        presets.forEach { preset ->
-                            FilterChip(
-                                selected = name == preset,
-                                onClick = { name = preset },
-                                label = { Text(preset) }
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { viewModel.createArea(name.trim()) }, enabled = name.isNotBlank()) {
-                    Text("确定")
-                }
-            },
-            dismissButton = { TextButton(onClick = { viewModel.dismissAddDialog() }) { Text("取消") } }
-        )
     }
 
     deleteTarget?.let { area ->
         ConfirmDialog(
-            title = "删除区域",
-            message = "确认删除「${area.name}」？该区域下的所有物品也会被删除。",
-            confirmLabel = "删除",
+            title = "删除区域", message = "确认删除「${area.name}」？该区域下的所有物品也会被删除。",
             isDangerous = true,
             onConfirm = { viewModel.deleteArea(area.id); deleteTarget = null },
             onDismiss = { deleteTarget = null }
@@ -122,39 +151,53 @@ fun RoomScreen(
 }
 
 @Composable
-private fun AreaCard(
-    area: Area,
-    isEditing: Boolean,
-    editingName: String,
-    onNameChange: (String) -> Unit,
-    onNameClick: () -> Unit,
-    onCommitRename: () -> Unit,
-    onCancelEdit: () -> Unit,
-    onClick: () -> Unit,
-    onDelete: () -> Unit
+private fun AreaRow(
+    area: Area, isEditing: Boolean, editName: String,
+    onNameChange: (String) -> Unit, onStartEdit: () -> Unit,
+    onCommitRename: () -> Unit, onCancelEdit: () -> Unit,
+    onClick: () -> Unit, onDelete: () -> Unit
 ) {
-    SwipeToDismissCard(onDelete = onDelete) {
-        Card(
-            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
-        ) {
-            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Category, null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(28.dp))
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    if (isEditing) {
-                        OutlinedTextField(value = editingName, onValueChange = onNameChange, singleLine = true)
-                        Row {
-                            TextButton(onClick = onCommitRename) { Text("确定") }
-                            TextButton(onClick = onCancelEdit) { Text("取消") }
-                        }
-                    } else {
-                        Text(area.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.clickable { onNameClick() })
-                        Text("${area.itemCount} 件物品", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+    var swiped by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+    val fm = LocalFocusManager.current
+
+    Box {
+        // Delete background
+        if (swiped) {
+            Row(Modifier.fillMaxSize().background(Color(0xFFD32F2F), RoundedCornerShape(12.dp)).padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "删除", tint = Color.White) }
+                Text("删除", color = Color.White, fontSize = 12.sp)
             }
+        }
+
+        Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Category, null, Modifier.size(20.dp), tint = InkMuted)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                if (isEditing) {
+                    BasicTextField(
+                        value = editName, onValueChange = onNameChange, singleLine = true,
+                        textStyle = TextStyle(fontFamily = SerifFont, fontWeight = FontWeight.Medium, fontSize = 14.sp, color = Ink),
+                        cursorBrush = SolidColor(Rosewood),
+                        modifier = Modifier.focusRequester(focusRequester).fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(InkVeryFaint).padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+                    Row {
+                        TextButton(onClick = { fm.clearFocus(); onCommitRename() }) { Text("确定", color = Rosewood, fontSize = 12.sp) }
+                        TextButton(onClick = { fm.clearFocus(); onCancelEdit() }) { Text("取消", color = InkMuted, fontSize = 12.sp) }
+                    }
+                } else {
+                    Text(area.name, fontFamily = SerifFont, fontWeight = FontWeight.Medium, fontSize = 14.sp, color = Ink,
+                        modifier = Modifier.clickable { onStartEdit() })
+                    Text("${area.itemCount} 件物品", fontSize = 12.sp, color = InkMuted)
+                }
+            }
+            IconButton(onClick = { swiped = !swiped }, modifier = Modifier.size(24.dp)) {
+                Icon(Icons.Default.MoreVert, null, Modifier.size(16.dp), tint = InkMuted)
+            }
+            Icon(Icons.Default.ChevronRight, null, tint = InkMuted, modifier = Modifier.size(16.dp))
         }
     }
 }
