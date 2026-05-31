@@ -1,5 +1,6 @@
 package com.keepsake.app.ai
 
+import javax.inject.Inject
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.*
@@ -30,7 +31,7 @@ sealed class AiResult<out T> {
     data class Error(val message: String) : AiResult<Nothing>()
 }
 
-class AiService(private val client: OkHttpClient) {
+class AiService @Inject constructor(private val client: OkHttpClient) {
 
     private val json = Json {
         ignoreUnknownKeys = true
