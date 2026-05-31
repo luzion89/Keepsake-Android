@@ -86,14 +86,14 @@ class ReminderScannerTest {
         assertTrue(item.deleted)
     }
 
-    @Test fun `A09 green badge for > 30 days`() {
+    @Test fun `A09 green badge when more than 30 days`() {
         val now = System.currentTimeMillis()
         val in60Days = now + TimeUnit.DAYS.toMillis(60)
         val remaining = in60Days - now
         assertTrue(">30天应为绿色", remaining > TimeUnit.DAYS.toMillis(30))
     }
 
-    @Test fun `A10 yellow badge for <= 30 days > 7 days`() {
+    @Test fun `A10 yellow badge for 30 days down to 7 days`() {
         val now = System.currentTimeMillis()
         val in20Days = now + TimeUnit.DAYS.toMillis(20)
         val remaining = in20Days - now
@@ -101,7 +101,7 @@ class ReminderScannerTest {
             remaining <= TimeUnit.DAYS.toMillis(30) && remaining > TimeUnit.DAYS.toMillis(7))
     }
 
-    @Test fun `A11 red badge for <= 7 days or expired`() {
+    @Test fun `A11 red badge for 7 days or expired`() {
         val now = System.currentTimeMillis()
         val in3Days = now + TimeUnit.DAYS.toMillis(3)
         val remaining = in3Days - now
