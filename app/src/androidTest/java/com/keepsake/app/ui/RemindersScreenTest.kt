@@ -34,7 +34,7 @@ class RemindersScreenTest {
     }
 
     @Test
-    fun loadingStateShouldShowProgress() {
+    fun loadingStateShouldNotShowEmptyState() {
         val vm = mockk<RemindersViewModel>(relaxed = true)
         every { vm.uiState } returns MutableStateFlow(
             RemindersUiState(isLoading = true)
@@ -44,7 +44,10 @@ class RemindersScreenTest {
             RemindersScreen(viewModel = vm, onItemClick = {})
         }
 
-        composeTestRule.onNode(isProgressIndicator()).assertExists()
+        // Loading state should NOT show empty hint
+        composeTestRule
+            .onNodeWithText("暂无提醒")
+            .assertDoesNotExist()
     }
 
     @Test

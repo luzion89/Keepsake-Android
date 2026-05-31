@@ -37,7 +37,7 @@ class HomeScreenTest {
     }
 
     @Test
-    fun loadingStateShouldShowProgressIndicator() {
+    fun loadingStateShouldNotShowEmptyStateText() {
         val vm = createMockViewModel()
         val state = com.keepsake.app.ui.home.HomeUiState(isLoading = true)
         every { vm.uiState } returns kotlinx.coroutines.flow.MutableStateFlow(state)
@@ -46,10 +46,10 @@ class HomeScreenTest {
             HomeScreen(viewModel = vm, onRoomClick = {})
         }
 
-        // Loading indicator should be present
+        // Loading state should NOT show empty hint
         composeTestRule
-            .onNode(isProgressIndicator())
-            .assertExists()
+            .onNodeWithText("还没有房间，点击右下角添加")
+            .assertDoesNotExist()
     }
 
     @Test
