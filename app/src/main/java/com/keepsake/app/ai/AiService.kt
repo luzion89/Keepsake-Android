@@ -7,7 +7,8 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.*
+import kotlinx.serialization.builtins.serializer
 
 @Serializable
 data class ParsedItem(
@@ -246,7 +247,7 @@ class AiService(private val client: OkHttpClient) {
                 .let { "[$it]" }
             val arr = json.parseToJsonElement(cleaned).jsonArray
             arr.map { elem ->
-                val map = elem.jsonObject.entries.associate { (key, value) -> key to value }
+                val map = elem.jsonObject.entries.associate { e -> e.key to e.value }
                 mapper(map)
             }
         } catch (e: Exception) {

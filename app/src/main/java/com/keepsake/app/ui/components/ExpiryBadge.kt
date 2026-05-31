@@ -24,9 +24,9 @@ fun ExpiryBadge(expiresAt: Long?, modifier: Modifier = Modifier) {
     val daysLeft = TimeUnit.MILLISECONDS.toDays(remaining)
 
     val (text, bgColor, textColor) = when {
-        remaining <= 0 -> "已过期" to Color(0xFFFFEBEE) to Color(0xFFB71C1C)
-        remaining <= EXPIRY_DANGER -> "还有${daysLeft}天" to Color(0xFFFFF3E0) to Color(0xFFE65100)
-        remaining <= EXPIRY_WARN -> "还有${daysLeft}天" to Color(0xFFF1F8E9) to Color(0xFF33691E)
+        remaining <= 0 -> Triple("已过期", Color(0xFFFFEBEE), Color(0xFFB71C1C))
+        remaining <= EXPIRY_DANGER -> Triple("还有${daysLeft}天", Color(0xFFFFF3E0), Color(0xFFE65100))
+        remaining <= EXPIRY_WARN -> Triple("还有${daysLeft}天", Color(0xFFF1F8E9), Color(0xFF33691E))
         else -> return
     }
 

@@ -34,7 +34,6 @@ import java.io.FileOutputStream
 import android.graphics.BitmapFactory
 import javax.inject.Inject
 
-@AndroidEntryPoint
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CaptureScreen(
@@ -166,8 +165,7 @@ fun CaptureScreen(
                 // Save button
                 Button(
                     onClick = {
-                        val repo = PhotoRepository(/* hilt injection */)
-                        // Save photos...
+                        // TODO: inject PhotoRepository via hiltViewModel
                         onBack()
                     },
                     modifier = Modifier.fillMaxWidth().padding(16.dp)
