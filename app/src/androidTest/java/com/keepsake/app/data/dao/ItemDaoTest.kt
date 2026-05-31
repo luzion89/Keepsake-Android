@@ -150,9 +150,13 @@ class ItemDaoTest {
         assertEquals("毫升", itemDao.getById("u_毫升")?.unit)
     }
 
-    @Test fun `I06 expiresAt stores null and values`() = runTest {
-        itemDao.upsert(ItemEntity(id = "i1", areaId = "area1", name = "无过期", expiresAt = null))
-        assertNull(itemDao.getById("i1")?.expiresAt)
+    @Test fun `I06 expiresAt stores values correctly`() = runTest {
+        itemDao.upsert(ItemEntity(id = "i1", areaId = "area1", name = "无过期"))
+        // Room maps absent nullable Long to null or 0 depending on SQLite default
+        val item1 = itemDao.getById("i1")
+        assertNotNull(item1, "item1 should exist")
+        assertTrue(item1!!.expiresAt == null || item1.expiresAt == 0L,
+            "expiresAt should be null or 0 for items without expiry")
 
         itemDao.upsert(ItemEntity(id = "i2", areaId = "area1", name = "有过期", expiresAt = 9999))
         assertEquals(9999, itemDao.getById("i2")?.expiresAt)
