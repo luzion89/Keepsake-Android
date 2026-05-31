@@ -132,9 +132,53 @@ class ItemDaoTest {
         itemDao.upsert(ItemEntity(id = "i2", areaId = "area1", name = "还早", expiresAt = futureExpiry))
         itemDao.upsert(ItemEntity(id = "i3", areaId = "area1", name = "无过期"))
 
-        // Count items expiring within 7 days
         val threshold = now + 86400000 * 7
         val count = itemDao.countExpiringSoon(threshold)
-        assertEquals(1, count) // Only i1 expires within 7 days
+        assertEquals(1, count)
+    }
+
+    @Test fun `A05 empty name item can be created`() = runTest {
+        itemDao.upsert(ItemEntity(id = "i1", areaId = "area1", name = ""))
+        assertEquals("", itemDao.getById("i1")?.name)
+    }
+
+    @Test fun `I05 unit field stores formats`() = runTest {
+        listOf("瓶", "盒", "袋", "个", "包", "升", "毫升").forEach { unit ->
+            itemDao.upsert(ItemEntity(id = "u_$unit", areaId = "area1", name = unit, unit = unit))
+        }
+        assertEquals("瓶", itemDao.getById("u_瓶")?.unit)
+        assertEquals("毫升", itemDao.getById("u_毫升")?.unit)
+    }
+
+    @Test fun `I06 expiresAt stores null and values`() = runTest {
+        itemDao.upsert(ItemEntity(id = "i1", areaId = "area1", name = "无过期", expiresAt = null))
+        assertNull(itemDao.getById("i1")?.expiresAt)
+
+        itemDao.upsert(ItemEntity(id = "i2", areaId = "area1", name = "有过期", expiresAt = 9999))
+        assertEquals(9999, itemDao.getById("i2")?.expiresAt)
+    }
+
+    @Test fun `I11 duplicate tags should be stored`() = runTest {
+        itemDao.upsert(ItemEntity(id = "i1", areaId = "area1", name = "标签测试", tags = "\"日用\",\"日用\",\"工具\""))
+        assertNotNull(itemDao.getById("i1"))
+    }
+
+    @Test fun `S02 search partial name match`() = runTest {
+        itemDao.upsert(ItemEntity(id = "i1", areaId = "area1", name = "飘柔洗发水"))
+        assertEquals(1, itemDao.search("飘柔").size)
+        assertEquals(1, itemDao.search("发水").size)
+        assertEquals(1, itemDao.search("飘柔洗发水").size)
+    }
+
+    @Test fun `S05 search no results returns empty`() = runTest {
+        itemDao.upsert(ItemEntity(id = "i1", areaId = "area1", name = "洗发水"))
+        assertTrue(itemDao.search("电视机").isEmpty())
+    }
+
+    @Test fun `I20 item with photos stores photoIds`() = runTest {
+        itemDao.upsert(ItemEntity(id = "i1", areaId = "area1", name = "带照片", photoIds = "\"p1\",\"p2\""))
+        val item = itemDao.getById("i1")
+        assertNotNull(item)
+        assertTrue(item?.photoIds?.contains("p1") == true)
     }
 }

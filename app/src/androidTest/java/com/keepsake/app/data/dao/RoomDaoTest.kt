@@ -83,4 +83,24 @@ class RoomDaoTest {
         assertNull(dao.getById("r1")) // getById filters deleted=0
         assertEquals(0, dao.count())
     }
+
+    @Test fun `H01 empty list returns empty`() = runTest {
+        assertTrue(dao.getAll().isEmpty())
+    }
+
+    @Test fun `H05 blank name is stored as-is`() = runTest {
+        dao.upsert(RoomEntity(id = "r1", name = "", updatedAt = 1000))
+        assertEquals("", dao.getById("r1")?.name)
+    }
+
+    @Test fun `H05 null name is stored`() = runTest {
+        dao.upsert(RoomEntity(id = "r1", name = "", updatedAt = 1000))
+        assertNotNull(dao.getById("r1"))
+    }
+
+    @Test fun `H06 long name 60 chars`() = runTest {
+        val longName = "A".repeat(60)
+        dao.upsert(RoomEntity(id = "r1", name = longName))
+        assertEquals(60, dao.getById("r1")?.name?.length)
+    }
 }
