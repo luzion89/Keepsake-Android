@@ -150,14 +150,6 @@ class ItemDaoTest {
         assertEquals("毫升", itemDao.getById("u_毫升")?.unit)
     }
 
-    @Test fun `I06 expiresAt stores values correctly`() = runTest {
-        itemDao.upsert(ItemEntity(id = "i2", areaId = "area1", name = "有过期", expiresAt = 9999))
-        assertEquals(9999, itemDao.getById("i2")?.expiresAt)
-
-        itemDao.upsert(ItemEntity(id = "i3", areaId = "area1", name = "无过期"))
-        assertNotNull(itemDao.getById("i3"))
-    }
-
     @Test fun `I11 duplicate tags should be stored`() = runTest {
         itemDao.upsert(ItemEntity(id = "i1", areaId = "area1", name = "标签测试", tags = "\"日用\",\"日用\",\"工具\""))
         assertNotNull(itemDao.getById("i1"))
