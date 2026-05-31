@@ -6,7 +6,6 @@ import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonElement
 
@@ -199,21 +198,12 @@ class AiService(private val client: OkHttpClient) {
         model: String,
         messages: List<Map<String, String>>
     ): AiResult<String> {
-        val payload = mapOf(
-            "model" to model,
-            "messages" to messages,
-            "temperature" to 0.1
-        )
-
-        val bodyStr = """{"model":"$model","messages":${kotlinx.serialization.json.Json.encodeToString(
-            kotlinx.serialization.builtins.ListSerializer(
-                kotlinx.serialization.builtins.MapSerializer(
-                    kotlinx.serialization.builtins.serializer<String>(),
-                    kotlinx.serialization.builtins.serializer<String>()
-                )
-            ),
-            messages
-        )},"temperature":0.1}"""
+        val msgsJson = messages.joinToString(",") { msg ->
+            val role = msg["role"] ?: "user"
+            val content = (msg["content"] ?: "").replace("\"", "\\\"").replace("\n", "\\n")
+            """{"role":"$role","content":"$content"}"""
+        }
+        val bodyStr = """{"model":"$model","messages":[$msgsJson],"temperature":0.1}"""
 
         val request = Request.Builder()
             .url(url)
