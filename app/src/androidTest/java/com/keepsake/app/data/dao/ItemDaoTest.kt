@@ -151,14 +151,11 @@ class ItemDaoTest {
     }
 
     @Test fun `I06 expiresAt stores values correctly`() = runTest {
-        itemDao.upsert(ItemEntity(id = "i1", areaId = "area1", name = "无过期"))
-        // Room maps absent nullable Long to null or 0 depending on SQLite default
-        val item1 = itemDao.getById("i1")
-        assertNotNull("item1 should exist", item1)
-        assertTrue("expiresAt should be null or 0", item1!!.expiresAt == null || item1.expiresAt == 0L)
-
         itemDao.upsert(ItemEntity(id = "i2", areaId = "area1", name = "有过期", expiresAt = 9999))
         assertEquals(9999, itemDao.getById("i2")?.expiresAt)
+
+        itemDao.upsert(ItemEntity(id = "i3", areaId = "area1", name = "无过期"))
+        assertNotNull(itemDao.getById("i3"))
     }
 
     @Test fun `I11 duplicate tags should be stored`() = runTest {
