@@ -14,3 +14,5 @@ local.properties
 *.aab
 *.jks
 *.keystore
+screenshots/
+screenshots_v2/
