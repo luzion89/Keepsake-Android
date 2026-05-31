@@ -67,7 +67,7 @@ class RoomRepositoryTest {
     }
 
     @Test
-    fun `observeAll should emit rooms sorted by updatedAt desc`() = runTest {
+    fun `observeAll should emit rooms`() = runTest {
         val room1 = RoomEntity(id = "1", name = "厨房", updatedAt = 3000)
         val room2 = RoomEntity(id = "2", name = "客厅", updatedAt = 1000)
         val room3 = RoomEntity(id = "3", name = "卧室", updatedAt = 2000)
@@ -75,12 +75,13 @@ class RoomRepositoryTest {
         coEvery { areaDao.countByRoom(any()) } returns 0
 
         val roomsFlow = repo.observeAll()
-        val result = mutableListOf<List<com.keepsake.app.domain.model.Room>>()
-        roomsFlow.collect { result.add(it); throw kotlinx.coroutines.CancellationException() }
+        val first = roomsFlow.first()
 
-        assertEquals(1, result.size)
-        // Should be sorted by updated_at DESC: kitchen(3000), bedroom(2000), living(1000)
-        assertEquals("厨房", result[0][0].name)
+        assertEquals(3, first.size)
+        // DAO returns sorted by updatedAt DESC
+        assertEquals("厨房", first[0].name)
+        assertEquals("卧室", first[1].name)
+        assertEquals("客厅", first[2].name)
     }
 
     @Test

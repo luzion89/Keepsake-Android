@@ -85,49 +85,41 @@ class AiServiceTest {
     // --- Provider URL construction ---
     @Test
     fun `getProviderConfig deepseek should use deepseek URL and model`() {
-        val result = invokePrivate(service, "getProviderConfig",
-            "deepseek", "sk-test", null)
-        val triple = result as Triple<*, *, *>
-        assertEquals("https://api.deepseek.com/v1/chat/completions", triple.first)
-        assertEquals("sk-test", triple.second)
-        assertEquals("deepseek-chat", triple.third)
+        val result = invokeGetProviderConfig("deepseek", "sk-test", null)
+        assertEquals("https://api.deepseek.com/v1/chat/completions", result.first)
+        assertEquals("sk-test", result.second)
+        assertEquals("deepseek-chat", result.third)
     }
 
     @Test
     fun `getProviderConfig openrouter should use openrouter URL`() {
-        val result = invokePrivate(service, "getProviderConfig",
-            "openrouter", "sk-or-xxx", null)
-        val triple = result as Triple<*, *, *>
-        assertEquals("https://openrouter.ai/api/v1/chat/completions", triple.first)
-        assertEquals("google/gemini-2.5-flash-lite", triple.third)
+        val result = invokeGetProviderConfig("openrouter", "sk-or-xxx", null)
+        assertEquals("https://openrouter.ai/api/v1/chat/completions", result.first)
+        assertEquals("google/gemini-2.5-flash-lite", result.third)
     }
 
     @Test
     fun `getProviderConfig should use model override`() {
-        val result = invokePrivate(service, "getProviderConfig",
-            "deepseek", "sk-test", "custom-model")
-        val triple = result as Triple<*, *, *>
-        assertEquals("custom-model", triple.third)
+        val result = invokeGetProviderConfig("deepseek", "sk-test", "custom-model")
+        assertEquals("custom-model", result.third)
     }
 
     // --- extractContent ---
     @Test
     fun `extractContent should parse valid OpenAI response`() {
         val json = """{"choices":[{"message":{"content":"test content"}}]}"""
-        val result = invokePrivate(service, "extractContent", json)
+        val result = invokeExtractContent(json)
         assertEquals("test content", result)
     }
 
     @Test
     fun `extractContent should return null for invalid JSON`() {
-        val result = invokePrivate(service, "extractContent", "not json")
-        assertNull(result)
+        assertNull(invokeExtractContent("not json"))
     }
 
     @Test
     fun `extractContent should return null for empty choices`() {
-        val result = invokePrivate(service, "extractContent", """{"choices":[]}""")
-        assertNull(result)
+        assertNull(invokeExtractContent("""{"choices":[]}"""))
     }
 
     // --- extractJsonArray ---
@@ -139,40 +131,41 @@ class AiServiceTest {
             更多说明
         """.trimIndent()
 
-        val results = mutableListOf<ParsedItem>()
-        val result = invokePrivate(service, "extractJsonArray",
-            content,
-            { map: Map<String, JsonElement> ->
-                ParsedItem(
-                    name = map["name"]?.toString()?.trim('"') ?: "",
-                    qty = (map["qty"]?.toString()?.trim('"'))?.toIntOrNull() ?: 1,
-                    unit = map["unit"]?.toString()?.trim('"'),
-                    notes = map["notes"]?.toString()?.trim('"')
-                )
-            })
-
-        val list = (result as? List<*>) ?: emptyList<ParsedItem>()
-        assertFalse("Should find at least 1 item", list.isEmpty())
+        val result = invokeExtractJsonArray(content)
+        assertFalse("Should find at least 1 item", result.isEmpty())
     }
 
-    // --- Helper for private method invocation ---
+    // --- Explicit typed helpers instead of generic invokePrivate ---
     @Suppress("UNCHECKED_CAST")
-    private fun <T> invokePrivate(obj: Any, methodName: String, vararg args: Any?): T? {
-        val method = obj::class.java.declaredMethods.firstOrNull { it.name == methodName }
-            ?: return null
+    private fun invokeGetProviderConfig(p: String, k: String, m: String?): Triple<String, String, String> {
+        val method = AiService::class.java.getDeclaredMethod("getProviderConfig", String::class.java, String::class.java, String::class.java)
         method.isAccessible = true
-        return try {
-            method.invoke(obj, *args) as? T
-        } catch (e: Exception) {
-            null
+        return method.invoke(service, p, k, m) as Triple<String, String, String>
+    }
+
+    private fun invokeExtractContent(json: String): String? {
+        val method = AiService::class.java.getDeclaredMethod("extractContent", String::class.java)
+        method.isAccessible = true
+        return method.invoke(service, json) as? String
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun invokeExtractJsonArray(content: String): List<ParsedItem> {
+        val method = AiService::class.java.declaredMethods.first { it.name == "extractJsonArray" }
+        method.isAccessible = true
+        val mapper: (Map<String, JsonElement>) -> ParsedItem = { map ->
+            ParsedItem(
+                name = map["name"]?.toString()?.trim('"') ?: "",
+                qty = (map["qty"]?.toString()?.trim('"'))?.toIntOrNull() ?: 1,
+                unit = map["unit"]?.toString()?.trim('"'),
+                notes = map["notes"]?.toString()?.trim('"')
+            )
         }
+        return method.invoke(service, content, mapper) as? List<ParsedItem> ?: emptyList()
     }
 
     @Test
-    fun `system prompt should include notes field extraction rules`() {
-        val promptField = AiService::class.java.declaredFields
-            .firstOrNull { f -> !f.name.startsWith("PARSE") }  // won't find private companion vals directly
-        // Verify the class compiles and has expected structure
-        assertNotNull(AiService(client))
+    fun `system prompt should exist and class compiles`() {
+        assertNotNull(service)
     }
 }
