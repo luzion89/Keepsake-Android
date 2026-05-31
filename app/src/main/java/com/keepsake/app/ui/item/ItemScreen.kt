@@ -70,7 +70,7 @@ fun ItemScreen(
     if (uiState.deleteDialogVisible) {
         ConfirmDialog(
             title = "删除物品",
-            message = "确认删除"${item?.name}"？",
+            message = "确认删除「${item?.name}」？",
             isDangerous = true,
             onConfirm = { viewModel.deleteItem(); viewModel.dismissDeleteDialog(); onBack() },
             onDismiss = { viewModel.dismissDeleteDialog() }

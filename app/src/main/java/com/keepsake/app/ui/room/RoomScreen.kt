@@ -111,7 +111,7 @@ fun RoomScreen(
     deleteTarget?.let { area ->
         ConfirmDialog(
             title = "删除区域",
-            message = "确认删除"${area.name}"？该区域下的所有物品也会被删除。",
+            message = "确认删除「${area.name}」？该区域下的所有物品也会被删除。",
             confirmLabel = "删除",
             isDangerous = true,
             onConfirm = { viewModel.deleteArea(area.id); deleteTarget = null },

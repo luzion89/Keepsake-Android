@@ -81,7 +81,7 @@ fun HomeScreen(
     deleteTarget?.let { room ->
         ConfirmDialog(
             title = "删除房间",
-            message = "确认删除"${room.name}"？该房间下的所有区域和物品也会被删除。",
+            message = "确认删除「${room.name}」？该房间下的所有区域和物品也会被删除。",
             confirmLabel = "删除",
             isDangerous = true,
             onConfirm = {
