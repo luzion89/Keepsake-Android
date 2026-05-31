@@ -157,8 +157,7 @@ private fun RoomCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun AddRoomDialog(
     onDismiss: () -> Unit,

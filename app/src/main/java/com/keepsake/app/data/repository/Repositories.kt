@@ -110,6 +110,8 @@ class AreaRepository @Inject constructor(
         itemDao.softDeleteByArea(id, now)
     }
 
+    suspend fun count(): Int = areaDao.count()
+
     private suspend fun AreaEntity.toDomain(): Area {
         val count = itemDao.countByArea(id)
         return Area(
@@ -248,6 +250,8 @@ class PhotoRepository @Inject constructor(
     suspend fun softDelete(id: String) {
         photoDao.softDelete(id, System.currentTimeMillis())
     }
+
+    suspend fun count(): Int = photoDao.count()
 
     private fun PhotoEntity.toDomain() = Photo(
         id = id, parentType = parentType, parentId = parentId,
