@@ -76,19 +76,17 @@ fun AreaScreen(
                         }
                     }
 
-                    // Manual add toggle
+                    // Manual add form connected to ViewModel
                     item {
-                        var expanded by remember { mutableStateOf(false) }
-                        var addName by remember { mutableStateOf("") }
-                        Row(Modifier.padding(horizontal = 16.dp).clickable { expanded = !expanded }, verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Add, null, Modifier.size(16.dp).padding(end = 4.dp), tint = InkMuted)
+                        TextButton(onClick = viewModel::toggleAddForm, modifier = Modifier.padding(horizontal = 16.dp)) {
+                            Icon(Icons.Default.Add, null, Modifier.size(16.dp), tint = InkMuted)
                             Text("快速添加", fontSize = 12.sp, color = InkMuted)
                         }
-                        if (expanded) {
+                        if (state.showAddForm) {
                             Row(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedTextField(value = addName, onValueChange = { addName = it }, label = { Text("名称") }, singleLine = true, modifier = Modifier.weight(2f), colors = outlinedFieldColors(Rosewood))
-                                OutlinedTextField(value = "1", onValueChange = {}, label = { Text("数量") }, singleLine = true, modifier = Modifier.weight(1f), colors = outlinedFieldColors(Rosewood))
-                                FilledTonalButton(onClick = { if (addName.isNotBlank()) { viewModel.addItem(); addName = "" } },
+                                OutlinedTextField(value = state.addName, onValueChange = { viewModel.updateAddName(it) }, label = { Text("名称") }, singleLine = true, modifier = Modifier.weight(2f), colors = outlinedFieldColors(Rosewood))
+                                OutlinedTextField(value = state.addQty, onValueChange = { viewModel.updateAddQty(it) }, label = { Text("数量") }, singleLine = true, modifier = Modifier.weight(1f), colors = outlinedFieldColors(Rosewood))
+                                FilledTonalButton(onClick = { viewModel.addItem() }, enabled = state.addName.isNotBlank(),
                                     modifier = Modifier.height(56.dp), colors = ButtonDefaults.filledTonalButtonColors(containerColor = Rosewood.copy(alpha = 0.15f), contentColor = Rosewood)
                                 ) { Text("添加") }
                             }
@@ -138,24 +136,27 @@ fun AreaScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ItemRow(
     item: Item, onNameClick: () -> Unit, onClick: () -> Unit,
     onQtyDelta: (Int) -> Unit, onDelete: () -> Unit
 ) {
-    var swiped by remember { mutableStateOf(false) }
-    Box {
-        if (swiped) {
-            Row(Modifier.fillMaxSize().background(Color(0xFFD32F2F), RoundedCornerShape(12.dp)).padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "删除", tint = Color.White) }
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { if (it == SwipeToDismissBoxValue.EndToStart) { onDelete(); true } else false }
+    )
+    SwipeToDismissBox(
+        state = dismissState, backgroundContent = {
+            Box(Modifier.fillMaxSize().background(Color(0xFFD32F2F), RoundedCornerShape(12.dp)).padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterEnd) {
+                Icon(Icons.Default.Delete, "删除", tint = Color.White, modifier = Modifier.size(20.dp))
             }
-        }
-        Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        }, enableDismissFromStartToEnd = false, enableDismissFromEndToStart = true
+    ) {
+        Row(Modifier.fillMaxWidth().background(CardBg).clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    ExpiryBadge(expiresAt = item.expiresAt)
-                    Spacer(Modifier.width(4.dp))
+                    ExpiryBadge(expiresAt = item.expiresAt); Spacer(Modifier.width(4.dp))
                     Text(item.name, fontFamily = SerifFont, fontWeight = FontWeight.Medium, fontSize = 14.sp, color = Ink)
                 }
                 Text("${item.qty}${item.unit ?: "件"}", fontSize = 12.sp, color = InkMuted)
@@ -164,11 +165,8 @@ private fun ItemRow(
             IconButton(onClick = { onQtyDelta(-1) }, modifier = Modifier.size(32.dp), enabled = item.qty > 0) {
                 Icon(Icons.Default.Remove, null, Modifier.size(16.dp), tint = if (item.qty > 0) Ink else BorderSubtle)
             }
-            Text("${item.qty}", fontSize = 14.sp, color = Ink, modifier = Modifier.width(28.dp).padding(horizontal = 4.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-            IconButton(onClick = { onQtyDelta(1) }, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Default.Add, null, Modifier.size(16.dp), tint = Ink)
-            }
+            Text("${item.qty}", fontSize = 14.sp, color = Ink, modifier = Modifier.width(28.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            IconButton(onClick = { onQtyDelta(1) }, modifier = Modifier.size(32.dp)) { Icon(Icons.Default.Add, null, Modifier.size(16.dp), tint = Ink) }
         }
     }
 }

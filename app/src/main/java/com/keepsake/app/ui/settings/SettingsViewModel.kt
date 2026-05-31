@@ -44,22 +44,14 @@ class SettingsViewModel @Inject constructor(
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            dataStore.language.collect { lang -> _uiState.update { s -> s.copy(language = lang) } }
-        }
-        viewModelScope.launch {
-            dataStore.themeMode.collect { mode -> _uiState.update { s -> s.copy(theme = mode) } }
-        }
-        viewModelScope.launch {
-            dataStore.aiEnabled.combine(dataStore.aiProvider) { e, p -> e to p }
-                .combine(dataStore.aiApiKey) { pair, k ->
-                    _uiState.update { s -> s.copy(aiConfig = AiConfig(enabled = pair.first, provider = pair.second, apiKey = k)) }
-                }
-                .collect()
-        }
-        viewModelScope.launch {
-            dataStore.deviceId.collect { id -> _uiState.update { s -> s.copy(deviceId = id) } }
-        }
+        viewModelScope.launch { dataStore.language.collect { v -> _uiState.update { it.copy(language = v) } } }
+        viewModelScope.launch { dataStore.themeMode.collect { v -> _uiState.update { it.copy(theme = v) } } }
+        viewModelScope.launch { dataStore.deviceId.collect { v -> _uiState.update { it.copy(deviceId = v) } } }
+        viewModelScope.launch { dataStore.aiEnabled.collect { v -> _uiState.update { it.copy(aiConfig = it.aiConfig.copy(enabled = v)) } } }
+        viewModelScope.launch { dataStore.aiProvider.collect { v -> _uiState.update { it.copy(aiConfig = it.aiConfig.copy(provider = v)) } } }
+        viewModelScope.launch { dataStore.aiApiKey.collect { v -> _uiState.update { it.copy(aiConfig = it.aiConfig.copy(apiKey = v)) } } }
+        viewModelScope.launch { dataStore.aiDeepseekKey.collect { v -> _uiState.update { it.copy(aiConfig = it.aiConfig.copy(deepseekApiKey = v)) } } }
+        viewModelScope.launch { dataStore.aiModel.collect { v -> _uiState.update { it.copy(aiConfig = it.aiConfig.copy(model = v)) } } }
         loadStats()
     }
 
@@ -77,22 +69,27 @@ class SettingsViewModel @Inject constructor(
     fun setTheme(mode: String) { viewModelScope.launch { dataStore.setThemeMode(mode) } }
 
     fun setAiEnabled(enabled: Boolean) {
+        _uiState.update { it.copy(aiConfig = it.aiConfig.copy(enabled = enabled)) }
         viewModelScope.launch { dataStore.setAiEnabled(enabled) }
     }
 
     fun setAiProvider(provider: String) {
+        _uiState.update { it.copy(aiConfig = it.aiConfig.copy(provider = provider)) }
         viewModelScope.launch { dataStore.setAiProvider(provider) }
     }
 
     fun setAiApiKey(key: String) {
+        _uiState.update { it.copy(aiConfig = it.aiConfig.copy(apiKey = key)) }
         viewModelScope.launch { dataStore.setAiApiKey(key) }
     }
 
     fun setAiDeepseekKey(key: String) {
+        _uiState.update { it.copy(aiConfig = it.aiConfig.copy(deepseekApiKey = key)) }
         viewModelScope.launch { dataStore.setAiDeepseekKey(key) }
     }
 
     fun setAiModel(model: String) {
+        _uiState.update { it.copy(aiConfig = it.aiConfig.copy(model = model)) }
         viewModelScope.launch { dataStore.setAiModel(model) }
     }
 

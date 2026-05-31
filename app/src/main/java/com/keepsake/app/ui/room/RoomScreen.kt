@@ -150,6 +150,7 @@ fun RoomScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AreaRow(
     area: Area, isEditing: Boolean, editName: String,
@@ -157,32 +158,30 @@ private fun AreaRow(
     onCommitRename: () -> Unit, onCancelEdit: () -> Unit,
     onClick: () -> Unit, onDelete: () -> Unit
 ) {
-    var swiped by remember { mutableStateOf(false) }
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { if (it == SwipeToDismissBoxValue.EndToStart) { onDelete(); true } else false }
+    )
     val focusRequester = remember { FocusRequester() }
     val fm = LocalFocusManager.current
 
-    Box {
-        // Delete background
-        if (swiped) {
-            Row(Modifier.fillMaxSize().background(Color(0xFFD32F2F), RoundedCornerShape(12.dp)).padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "删除", tint = Color.White) }
-                Text("删除", color = Color.White, fontSize = 12.sp)
+    SwipeToDismissBox(
+        state = dismissState, backgroundContent = {
+            Box(Modifier.fillMaxSize().background(Color(0xFFD32F2F), RoundedCornerShape(12.dp)).padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterEnd) {
+                Row(verticalAlignment = Alignment.CenterVertically) { Text("删除", color = Color.White, fontSize = 12.sp); Spacer(Modifier.width(4.dp)); Icon(Icons.Default.Delete, "删除", tint = Color.White, modifier = Modifier.size(16.dp)) }
             }
-        }
-
-        Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
+        }, enableDismissFromStartToEnd = false, enableDismissFromEndToStart = true
+    ) {
+        Row(Modifier.fillMaxWidth().background(CardBg).clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Default.Category, null, Modifier.size(20.dp), tint = InkMuted)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 if (isEditing) {
-                    BasicTextField(
-                        value = editName, onValueChange = onNameChange, singleLine = true,
+                    BasicTextField(value = editName, onValueChange = onNameChange, singleLine = true,
                         textStyle = TextStyle(fontFamily = SerifFont, fontWeight = FontWeight.Medium, fontSize = 14.sp, color = Ink),
                         cursorBrush = SolidColor(Rosewood),
-                        modifier = Modifier.focusRequester(focusRequester).fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(InkVeryFaint).padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
+                        modifier = Modifier.focusRequester(focusRequester).fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(InkVeryFaint).padding(horizontal = 8.dp, vertical = 4.dp))
                     LaunchedEffect(Unit) { focusRequester.requestFocus() }
                     Row {
                         TextButton(onClick = { fm.clearFocus(); onCommitRename() }) { Text("确定", color = Rosewood, fontSize = 12.sp) }
@@ -193,9 +192,6 @@ private fun AreaRow(
                         modifier = Modifier.clickable { onStartEdit() })
                     Text("${area.itemCount} 件物品", fontSize = 12.sp, color = InkMuted)
                 }
-            }
-            IconButton(onClick = { swiped = !swiped }, modifier = Modifier.size(24.dp)) {
-                Icon(Icons.Default.MoreVert, null, Modifier.size(16.dp), tint = InkMuted)
             }
             Icon(Icons.Default.ChevronRight, null, tint = InkMuted, modifier = Modifier.size(16.dp))
         }
